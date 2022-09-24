@@ -4,8 +4,13 @@ package order_book
 
 import (
 	"context"
+	"fmt"
 
 	order_book "github.com/Mestrace/orderbook/biz/model/tradesoft/exchange/order_book"
+	"github.com/Mestrace/orderbook/conf"
+	"github.com/Mestrace/orderbook/domain/infra/api"
+	"github.com/Mestrace/orderbook/domain/processors"
+	blockchain_com "github.com/Mestrace/orderbook/third_party/lib-exchange-client/go"
 	"github.com/cloudwego/hertz/pkg/app"
 )
 
@@ -20,9 +25,33 @@ func GetExchangeOrderBook(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(order_book.GetExchangeOrderBookResp)
+	if req.GetExchangeName() != "blockchain.com" {
+		err = fmt.Errorf("\"%s\" is not supported", req.GetExchangeName())
+		handleResponse(ctx, c, &order_book.GetExchangeOrderBookResp{}, err)
+		return
+	}
 
-	c.JSON(200, resp)
+	cfg := conf.Get()
+
+	auth := context.WithValue(ctx, blockchain_com.ContextAPIKey, blockchain_com.APIKey{
+		Key:    cfg.BlockchainCom.APIKey,
+		Prefix: "Bearer", // Omit if not necessary.
+	})
+
+	proc := &processors.GetExchangeOrderBookProcessor{
+		OrderBookDAO: api.NewExchangeOrderBookBlockchainCom(
+			*blockchain_com.NewAPIClient(blockchain_com.NewConfiguration()),
+		),
+	}
+
+	resp, err := proc.Process(auth, &req)
+	handleResponse(ctx, c, resp, err)
+}
+
+// GetExchangeOrderBookAll .
+// @router exchanges/:exchange_name/order-books [GET]
+func GetExchangeOrderBookAll(ctx context.Context, c *app.RequestContext) {
+	GetExchangeOrderBook(ctx, c)
 }
 
 // GetExchangeMetadata .

@@ -4,15 +4,106 @@ package order_book
 
 import (
 	"context"
+	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
+type OrderBy int64
+
+const (
+	OrderBy_None   OrderBy = 0
+	OrderBy_Symbol OrderBy = 1
+)
+
+func (p OrderBy) String() string {
+	switch p {
+	case OrderBy_None:
+		return "None"
+	case OrderBy_Symbol:
+		return "Symbol"
+	}
+	return "<UNSET>"
+}
+
+func OrderByFromString(s string) (OrderBy, error) {
+	switch s {
+	case "None":
+		return OrderBy_None, nil
+	case "Symbol":
+		return OrderBy_Symbol, nil
+	}
+	return OrderBy(0), fmt.Errorf("not a valid OrderBy string")
+}
+
+func OrderByPtr(v OrderBy) *OrderBy { return &v }
+func (p *OrderBy) Scan(value interface{}) (err error) {
+	var result sql.NullInt64
+	err = result.Scan(value)
+	*p = OrderBy(result.Int64)
+	return
+}
+
+func (p *OrderBy) Value() (driver.Value, error) {
+	if p == nil {
+		return nil, nil
+	}
+	return int64(*p), nil
+}
+
+type OrderType int64
+
+const (
+	OrderType_All  OrderType = 0
+	OrderType_Asks OrderType = 1
+	OrderType_Bids OrderType = 2
+)
+
+func (p OrderType) String() string {
+	switch p {
+	case OrderType_All:
+		return "All"
+	case OrderType_Asks:
+		return "Asks"
+	case OrderType_Bids:
+		return "Bids"
+	}
+	return "<UNSET>"
+}
+
+func OrderTypeFromString(s string) (OrderType, error) {
+	switch s {
+	case "All":
+		return OrderType_All, nil
+	case "Asks":
+		return OrderType_Asks, nil
+	case "Bids":
+		return OrderType_Bids, nil
+	}
+	return OrderType(0), fmt.Errorf("not a valid OrderType string")
+}
+
+func OrderTypePtr(v OrderType) *OrderType { return &v }
+func (p *OrderType) Scan(value interface{}) (err error) {
+	var result sql.NullInt64
+	err = result.Scan(value)
+	*p = OrderType(result.Int64)
+	return
+}
+
+func (p *OrderType) Value() (driver.Value, error) {
+	if p == nil {
+		return nil, nil
+	}
+	return int64(*p), nil
+}
+
 type GetExchangeOrderBookReq struct {
 	ExchangeName string  `thrift:"ExchangeName,1,required" json:"ExchangeName,required" path:"exchange_name,required"`
-	Symbol       *string `thrift:"Symbol,2,optional" form:"symbol" json:"symbol,omitempty"`
-	OrderType    *int32  `thrift:"OrderType,3,optional" form:"order_type" json:"order_type,omitempty"`
-	OrderBy      *int32  `thrift:"OrderBy,4,optional" form:"order_by" json:"order_by,omitempty"`
+	Symbol       *string `thrift:"Symbol,2,optional" json:"Symbol,omitempty" path:"symbol"`
+	OrderType    *int32  `thrift:"OrderType,3,optional" json:"OrderType,omitempty" query:"order_type"`
+	OrderBy      *int32  `thrift:"OrderBy,4,optional" json:"OrderBy,omitempty" query:"order_by"`
 }
 
 func NewGetExchangeOrderBookReq() *GetExchangeOrderBookReq {
@@ -325,9 +416,9 @@ func (p *GetExchangeOrderBookReq) String() string {
 }
 
 type GetExchangeOrderBookResp struct {
-	BizCode int32              `thrift:"BizCode,1,required" form:"biz_code,required" json:"biz_code,required"`
-	ErrMsg  string             `thrift:"ErrMsg,2,required" form:"err_msg,required" json:"err_msg,required"`
-	Symbols map[string]*Symbol `thrift:"Symbols,3,required" form:"symbols,required" json:"symbols,required"`
+	BizCode int32     `thrift:"BizCode,1,required" form:"biz_code,required" json:"biz_code,required"`
+	ErrMsg  string    `thrift:"ErrMsg,2,required" form:"err_msg,required" json:"err_msg,required"`
+	Symbols []*Symbol `thrift:"Symbols,3,required" form:"symbols,required" json:"symbols,required"`
 }
 
 func NewGetExchangeOrderBookResp() *GetExchangeOrderBookResp {
@@ -342,7 +433,7 @@ func (p *GetExchangeOrderBookResp) GetErrMsg() (v string) {
 	return p.ErrMsg
 }
 
-func (p *GetExchangeOrderBookResp) GetSymbols() (v map[string]*Symbol) {
+func (p *GetExchangeOrderBookResp) GetSymbols() (v []*Symbol) {
 	return p.Symbols
 }
 
@@ -397,7 +488,7 @@ func (p *GetExchangeOrderBookResp) Read(iprot thrift.TProtocol) (err error) {
 				}
 			}
 		case 3:
-			if fieldTypeId == thrift.MAP {
+			if fieldTypeId == thrift.LIST {
 				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -472,26 +563,20 @@ func (p *GetExchangeOrderBookResp) ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *GetExchangeOrderBookResp) ReadField3(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
+	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return err
 	}
-	p.Symbols = make(map[string]*Symbol, size)
+	p.Symbols = make([]*Symbol, 0, size)
 	for i := 0; i < size; i++ {
-		var _key string
-		if v, err := iprot.ReadString(); err != nil {
-			return err
-		} else {
-			_key = v
-		}
-		_val := NewSymbol()
-		if err := _val.Read(iprot); err != nil {
+		_elem := NewSymbol()
+		if err := _elem.Read(iprot); err != nil {
 			return err
 		}
 
-		p.Symbols[_key] = _val
+		p.Symbols = append(p.Symbols, _elem)
 	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	if err := iprot.ReadListEnd(); err != nil {
 		return err
 	}
 	return nil
@@ -569,23 +654,18 @@ WriteFieldEndError:
 }
 
 func (p *GetExchangeOrderBookResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("Symbols", thrift.MAP, 3); err != nil {
+	if err = oprot.WriteFieldBegin("Symbols", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRUCT, len(p.Symbols)); err != nil {
+	if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Symbols)); err != nil {
 		return err
 	}
-	for k, v := range p.Symbols {
-
-		if err := oprot.WriteString(k); err != nil {
-			return err
-		}
-
+	for _, v := range p.Symbols {
 		if err := v.Write(oprot); err != nil {
 			return err
 		}
 	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := oprot.WriteListEnd(); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -606,12 +686,17 @@ func (p *GetExchangeOrderBookResp) String() string {
 }
 
 type Symbol struct {
-	Bid *SymbolItem `thrift:"Bid,1,required" form:"Bid,required" json:"Bid,required" query:"Bid,required"`
-	Ask *SymbolItem `thrift:"Ask,2,required" form:"Ask,required" json:"Ask,required" query:"Ask,required"`
+	Symbol string      `thrift:"Symbol,1,required" form:"Symbol,required" json:"Symbol,required" query:"Symbol,required"`
+	Bid    *SymbolItem `thrift:"Bid,2,optional" form:"Bid" json:"Bid,omitempty" query:"Bid"`
+	Ask    *SymbolItem `thrift:"Ask,3,optional" form:"Ask" json:"Ask,omitempty" query:"Ask"`
 }
 
 func NewSymbol() *Symbol {
 	return &Symbol{}
+}
+
+func (p *Symbol) GetSymbol() (v string) {
+	return p.Symbol
 }
 
 var Symbol_Bid_DEFAULT *SymbolItem
@@ -633,8 +718,9 @@ func (p *Symbol) GetAsk() (v *SymbolItem) {
 }
 
 var fieldIDToName_Symbol = map[int16]string{
-	1: "Bid",
-	2: "Ask",
+	1: "Symbol",
+	2: "Bid",
+	3: "Ask",
 }
 
 func (p *Symbol) IsSetBid() bool {
@@ -649,8 +735,7 @@ func (p *Symbol) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
-	var issetBid bool = false
-	var issetAsk bool = false
+	var issetSymbol bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -667,11 +752,11 @@ func (p *Symbol) Read(iprot thrift.TProtocol) (err error) {
 
 		switch fieldId {
 		case 1:
-			if fieldTypeId == thrift.STRUCT {
+			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField1(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetBid = true
+				issetSymbol = true
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -682,7 +767,16 @@ func (p *Symbol) Read(iprot thrift.TProtocol) (err error) {
 				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
-				issetAsk = true
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		case 3:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField3(iprot); err != nil {
+					goto ReadFieldError
+				}
 			} else {
 				if err = iprot.Skip(fieldTypeId); err != nil {
 					goto SkipFieldError
@@ -702,13 +796,8 @@ func (p *Symbol) Read(iprot thrift.TProtocol) (err error) {
 		goto ReadStructEndError
 	}
 
-	if !issetBid {
+	if !issetSymbol {
 		fieldId = 1
-		goto RequiredFieldNotSetError
-	}
-
-	if !issetAsk {
-		fieldId = 2
 		goto RequiredFieldNotSetError
 	}
 	return nil
@@ -730,6 +819,15 @@ RequiredFieldNotSetError:
 }
 
 func (p *Symbol) ReadField1(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		p.Symbol = v
+	}
+	return nil
+}
+
+func (p *Symbol) ReadField2(iprot thrift.TProtocol) error {
 	p.Bid = NewSymbolItem()
 	if err := p.Bid.Read(iprot); err != nil {
 		return err
@@ -737,7 +835,7 @@ func (p *Symbol) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *Symbol) ReadField2(iprot thrift.TProtocol) error {
+func (p *Symbol) ReadField3(iprot thrift.TProtocol) error {
 	p.Ask = NewSymbolItem()
 	if err := p.Ask.Read(iprot); err != nil {
 		return err
@@ -757,6 +855,10 @@ func (p *Symbol) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField2(oprot); err != nil {
 			fieldId = 2
+			goto WriteFieldError
+		}
+		if err = p.writeField3(oprot); err != nil {
+			fieldId = 3
 			goto WriteFieldError
 		}
 
@@ -779,10 +881,10 @@ WriteStructEndError:
 }
 
 func (p *Symbol) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("Bid", thrift.STRUCT, 1); err != nil {
+	if err = oprot.WriteFieldBegin("Symbol", thrift.STRING, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := p.Bid.Write(oprot); err != nil {
+	if err := oprot.WriteString(p.Symbol); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -796,20 +898,41 @@ WriteFieldEndError:
 }
 
 func (p *Symbol) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("Ask", thrift.STRUCT, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := p.Ask.Write(oprot); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetBid() {
+		if err = oprot.WriteFieldBegin("Bid", thrift.STRUCT, 2); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Bid.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
+}
+
+func (p *Symbol) writeField3(oprot thrift.TProtocol) (err error) {
+	if p.IsSetAsk() {
+		if err = oprot.WriteFieldBegin("Ask", thrift.STRUCT, 3); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Ask.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 3 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
 func (p *Symbol) String() string {
@@ -1792,6 +1915,8 @@ func (p *UpdateExchangeMetadataResp) String() string {
 type OrderBookService interface {
 	// GetExchangeOrderBook returns the price average and the total quantities of asks and bids for this exchange_name
 	GetExchangeOrderBook(ctx context.Context, req *GetExchangeOrderBookReq) (r *GetExchangeOrderBookResp, err error)
+
+	GetExchangeOrderBookAll(ctx context.Context, req *GetExchangeOrderBookReq) (r *GetExchangeOrderBookResp, err error)
 	// GetExchangeMetadata returns the list of exchange metadata stored in the database
 	GetExchangeMetadata(ctx context.Context, req *GetExchangeMetadataReq) (r *GetExchangeMetadataResp, err error)
 	// UpdateExchangeMetadata updates the exchange metadata by uploading a csv file
@@ -1829,6 +1954,15 @@ func (p *OrderBookServiceClient) GetExchangeOrderBook(ctx context.Context, req *
 	_args.Req = req
 	var _result OrderBookServiceGetExchangeOrderBookResult
 	if err = p.Client_().Call(ctx, "GetExchangeOrderBook", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+func (p *OrderBookServiceClient) GetExchangeOrderBookAll(ctx context.Context, req *GetExchangeOrderBookReq) (r *GetExchangeOrderBookResp, err error) {
+	var _args OrderBookServiceGetExchangeOrderBookAllArgs
+	_args.Req = req
+	var _result OrderBookServiceGetExchangeOrderBookAllResult
+	if err = p.Client_().Call(ctx, "GetExchangeOrderBookAll", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -1873,6 +2007,7 @@ func (p *OrderBookServiceProcessor) ProcessorMap() map[string]thrift.TProcessorF
 func NewOrderBookServiceProcessor(handler OrderBookService) *OrderBookServiceProcessor {
 	self := &OrderBookServiceProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
 	self.AddToProcessorMap("GetExchangeOrderBook", &orderBookServiceProcessorGetExchangeOrderBook{handler: handler})
+	self.AddToProcessorMap("GetExchangeOrderBookAll", &orderBookServiceProcessorGetExchangeOrderBookAll{handler: handler})
 	self.AddToProcessorMap("GetExchangeMetadata", &orderBookServiceProcessorGetExchangeMetadata{handler: handler})
 	self.AddToProcessorMap("UpdateExchangeMetadata", &orderBookServiceProcessorUpdateExchangeMetadata{handler: handler})
 	return self
@@ -1926,6 +2061,54 @@ func (p *orderBookServiceProcessorGetExchangeOrderBook) Process(ctx context.Cont
 		result.Success = retval
 	}
 	if err2 = oprot.WriteMessageBegin("GetExchangeOrderBook", thrift.REPLY, seqId); err2 != nil {
+		err = err2
+	}
+	if err2 = result.Write(oprot); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+		err = err2
+	}
+	if err != nil {
+		return
+	}
+	return true, err
+}
+
+type orderBookServiceProcessorGetExchangeOrderBookAll struct {
+	handler OrderBookService
+}
+
+func (p *orderBookServiceProcessorGetExchangeOrderBookAll) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := OrderBookServiceGetExchangeOrderBookAllArgs{}
+	if err = args.Read(iprot); err != nil {
+		iprot.ReadMessageEnd()
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+		oprot.WriteMessageBegin("GetExchangeOrderBookAll", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush(ctx)
+		return false, err
+	}
+
+	iprot.ReadMessageEnd()
+	var err2 error
+	result := OrderBookServiceGetExchangeOrderBookAllResult{}
+	var retval *GetExchangeOrderBookResp
+	if retval, err2 = p.handler.GetExchangeOrderBookAll(ctx, args.Req); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing GetExchangeOrderBookAll: "+err2.Error())
+		oprot.WriteMessageBegin("GetExchangeOrderBookAll", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush(ctx)
+		return true, err2
+	} else {
+		result.Success = retval
+	}
+	if err2 = oprot.WriteMessageBegin("GetExchangeOrderBookAll", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
 	if err2 = result.Write(oprot); err == nil && err2 != nil {
@@ -2329,6 +2512,298 @@ func (p *OrderBookServiceGetExchangeOrderBookResult) String() string {
 		return "<nil>"
 	}
 	return fmt.Sprintf("OrderBookServiceGetExchangeOrderBookResult(%+v)", *p)
+}
+
+type OrderBookServiceGetExchangeOrderBookAllArgs struct {
+	Req *GetExchangeOrderBookReq `thrift:"req,1"`
+}
+
+func NewOrderBookServiceGetExchangeOrderBookAllArgs() *OrderBookServiceGetExchangeOrderBookAllArgs {
+	return &OrderBookServiceGetExchangeOrderBookAllArgs{}
+}
+
+var OrderBookServiceGetExchangeOrderBookAllArgs_Req_DEFAULT *GetExchangeOrderBookReq
+
+func (p *OrderBookServiceGetExchangeOrderBookAllArgs) GetReq() (v *GetExchangeOrderBookReq) {
+	if !p.IsSetReq() {
+		return OrderBookServiceGetExchangeOrderBookAllArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+var fieldIDToName_OrderBookServiceGetExchangeOrderBookAllArgs = map[int16]string{
+	1: "req",
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllArgs) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_OrderBookServiceGetExchangeOrderBookAllArgs[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllArgs) ReadField1(iprot thrift.TProtocol) error {
+	p.Req = NewGetExchangeOrderBookReq()
+	if err := p.Req.Read(iprot); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllArgs) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("GetExchangeOrderBookAll_args"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField1(oprot); err != nil {
+			fieldId = 1
+			goto WriteFieldError
+		}
+
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := p.Req.Write(oprot); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("OrderBookServiceGetExchangeOrderBookAllArgs(%+v)", *p)
+}
+
+type OrderBookServiceGetExchangeOrderBookAllResult struct {
+	Success *GetExchangeOrderBookResp `thrift:"success,0,optional"`
+}
+
+func NewOrderBookServiceGetExchangeOrderBookAllResult() *OrderBookServiceGetExchangeOrderBookAllResult {
+	return &OrderBookServiceGetExchangeOrderBookAllResult{}
+}
+
+var OrderBookServiceGetExchangeOrderBookAllResult_Success_DEFAULT *GetExchangeOrderBookResp
+
+func (p *OrderBookServiceGetExchangeOrderBookAllResult) GetSuccess() (v *GetExchangeOrderBookResp) {
+	if !p.IsSetSuccess() {
+		return OrderBookServiceGetExchangeOrderBookAllResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+var fieldIDToName_OrderBookServiceGetExchangeOrderBookAllResult = map[int16]string{
+	0: "success",
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllResult) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField0(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_OrderBookServiceGetExchangeOrderBookAllResult[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllResult) ReadField0(iprot thrift.TProtocol) error {
+	p.Success = NewGetExchangeOrderBookResp()
+	if err := p.Success.Read(iprot); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllResult) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("GetExchangeOrderBookAll_result"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField0(oprot); err != nil {
+			fieldId = 0
+			goto WriteFieldError
+		}
+
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Success.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
+}
+
+func (p *OrderBookServiceGetExchangeOrderBookAllResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("OrderBookServiceGetExchangeOrderBookAllResult(%+v)", *p)
 }
 
 type OrderBookServiceGetExchangeMetadataArgs struct {

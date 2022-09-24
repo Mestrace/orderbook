@@ -24,7 +24,11 @@ func Register(r *server.Hertz) {
 			_exchange_name := _exchanges.Group("/:exchange_name", _exchange_nameMw()...)
 			_exchange_name.GET("/metadata", append(_getexchangemetadataMw(), order_book.GetExchangeMetadata)...)
 			_exchange_name.POST("/metadata", append(_updateexchangemetadataMw(), order_book.UpdateExchangeMetadata)...)
-			_exchange_name.GET("/order-books", append(_getexchangeorderbookMw(), order_book.GetExchangeOrderBook)...)
+			_exchange_name.GET("/order-books", append(_getexchangeorderbook_llMw(), order_book.GetExchangeOrderBookAll)...)
+			{
+				_order_books := _exchange_name.Group("/order-books", _order_booksMw()...)
+				_order_books.GET("/:symbol", append(_getexchangeorderbookMw(), order_book.GetExchangeOrderBook)...)
+			}
 		}
 	}
 }

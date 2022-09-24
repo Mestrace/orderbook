@@ -24,5 +24,5 @@ type GetSymbolPriceData struct {
 
 type SymbolStat struct {
 	PriceAvg *big.Float
-	TotalQty *big.Float
+	QtyTotal *big.Float
 }

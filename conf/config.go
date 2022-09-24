@@ -43,3 +43,7 @@ func Init(filename string) {
 		}
 	})
 }
+
+func Get() *Config {
+	return cfg
+}

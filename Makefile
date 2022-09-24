@@ -1,4 +1,7 @@
-orderbook:
+tidy:
+	go mod tidy
+	
+orderbook: tidy
 	go build -o bin/orderbook github.com/Mestrace/orderbook/cmd/orderbook
 
 setup:

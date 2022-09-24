@@ -11,6 +11,7 @@ import (
 	"github.com/Mestrace/orderbook/domain/infra/api"
 	"github.com/Mestrace/orderbook/domain/processors"
 	blockchain_com "github.com/Mestrace/orderbook/third_party/lib-exchange-client/go"
+	"github.com/bytedance/gopkg/util/logger"
 	"github.com/cloudwego/hertz/pkg/app"
 )
 
@@ -81,7 +82,22 @@ func UpdateExchangeMetadata(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(order_book.UpdateExchangeMetadataResp)
+	fileHead, err := c.FormFile("file")
+	if err != nil {
+		logger.CtxErrorf(ctx, "read_form_file_failed|err=%+v", err)
+		handleResponse(ctx, c, &order_book.UpdateExchangeMetadataReq{}, err)
+		return
+	}
 
-	c.JSON(200, resp)
+	file, err := fileHead.Open()
+	if err != nil {
+		logger.CtxErrorf(ctx, "open_form_file_failed|err=%+v", err)
+		handleResponse(ctx, c, &order_book.UpdateExchangeMetadataReq{}, err)
+		return
+	}
+
+	proc := processors.UpdateExchangeMetadata{}
+
+	resp, err := proc.Process(ctx, &req, file)
+	handleResponse(ctx, c, resp, err)
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/Mestrace/orderbook/domain/dao"
 	"github.com/Mestrace/orderbook/domain/model"
-	blockchain_com "github.com/Mestrace/orderbook/thirdparty/lib-exchange-client/go"
+	blockchain_com "github.com/Mestrace/orderbook/third_party/lib-exchange-client/go"
 	logger "github.com/sirupsen/logrus"
 )
 

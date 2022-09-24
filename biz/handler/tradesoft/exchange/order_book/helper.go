@@ -2,27 +2,36 @@ package order_book
 
 import (
 	"context"
+	"net/http"
 	"reflect"
 
 	"github.com/cloudwego/hertz/pkg/app"
 )
 
-func handleResponse(ctx context.Context, c *app.RequestContext, resp interface{}, err error) {
+func handleResponse(_ context.Context, reqCtxt *app.RequestContext, resp interface{}, err error) {
 	if err == nil {
-		c.JSON(200, resp)
+		reqCtxt.JSON(http.StatusOK, resp)
+
 		return
 	}
-	status := 500
+
+	status := http.StatusInternalServerError
+
 	setErrorResponse(resp, err)
-	c.JSON(status, resp)
+
+	reqCtxt.JSON(status, resp)
 }
 
 func setErrorResponse(resp interface{}, err error) {
 	code := int32(-1)
-	if bizCode := reflect.Indirect(reflect.ValueOf(resp)).FieldByName("BizCode"); bizCode.CanSet() && bizCode.Kind() == reflect.Int32 {
+
+	if bizCode := reflect.Indirect(reflect.ValueOf(resp)).
+		FieldByName("BizCode"); bizCode.CanSet() && bizCode.Kind() == reflect.Int32 {
 		bizCode.SetInt(int64(code))
 	}
-	if errMsg := reflect.Indirect(reflect.ValueOf(resp)).FieldByName("ErrMsg"); errMsg.CanSet() && errMsg.Kind() == reflect.String {
+
+	if errMsg := reflect.Indirect(reflect.ValueOf(resp)).
+		FieldByName("ErrMsg"); errMsg.CanSet() && errMsg.Kind() == reflect.String {
 		errMsg.SetString(err.Error())
 	}
 }

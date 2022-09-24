@@ -2,7 +2,6 @@ package conf
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -23,12 +22,11 @@ type Config struct {
 	} `json:"blockchain_com"`
 }
 
-// Init initialize the config, will fetch the config under project_root/conf
+// Init initialize the config, will fetch the config under project_root/conf.
 func Init(filename string) {
 	initOnce.Do(func() {
 		var err error
 		filepath := path.Join(constant.ProjectRoot, "conf", filename)
-		fmt.Println(filepath)
 		jsonFile, err := os.Open(filepath)
 		if err != nil {
 			panic("Init config failed")

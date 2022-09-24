@@ -14,7 +14,9 @@ type GetExchangeOrderBookProcessor struct {
 	OrderBookDAO dao.ExchangeOrderBook
 }
 
-func (p *GetExchangeOrderBookProcessor) Process(ctx context.Context, req *biz_model.GetExchangeOrderBookReq) (*biz_model.GetExchangeOrderBookResp, error) {
+func (p *GetExchangeOrderBookProcessor) Process(ctx context.Context,
+	req *biz_model.GetExchangeOrderBookReq,
+) (*biz_model.GetExchangeOrderBookResp, error) {
 	var (
 		resp    = &biz_model.GetExchangeOrderBookResp{}
 		symbols []string
@@ -26,18 +28,21 @@ func (p *GetExchangeOrderBookProcessor) Process(ctx context.Context, req *biz_mo
 		symbolListData, err := p.OrderBookDAO.GetSymbolList(ctx, nil)
 		if err != nil {
 			logger.CtxErrorf(ctx, "get_symbol_list_failed|err=%+v", err)
+
 			return nil, err
 		}
 		symbols = symbolListData.Symbols
 	}
 
 	result := make([]*biz_model.Symbol, 0, len(symbols))
+
 	for _, symbol := range symbols {
 		symbolPriceData, err := p.OrderBookDAO.GetSymbolPrice(ctx, &model.GetSymbolPriceParams{
 			Symbol: symbol,
 		})
 		if err != nil {
 			logger.CtxWarnf(ctx, "get_symbol_price_failed|err=%+v|symbol=%s", err, symbol)
+
 			continue
 		}
 

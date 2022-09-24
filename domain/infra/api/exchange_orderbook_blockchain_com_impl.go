@@ -20,10 +20,13 @@ func NewExchangeOrderBookBlockchainCom(client blockchain_com.APIClient) dao.Exch
 	}
 }
 
-func (o *exchangeOrderBookBlockchainComImpl) GetSymbolList(ctx context.Context, param *model.GetSymbolListParams) (*model.GetSymbolListData, error) {
+func (o *exchangeOrderBookBlockchainComImpl) GetSymbolList(
+	ctx context.Context, param *model.GetSymbolListParams,
+) (*model.GetSymbolListData, error) {
 	response, _, err := o.client.UnauthenticatedApi.GetSymbols(ctx)
 	if err != nil {
 		logger.CtxErrorf(ctx, "blockchain_com_api_get_symbols_error|err=%+v", err)
+
 		return nil, err
 	}
 
@@ -40,10 +43,13 @@ func (o *exchangeOrderBookBlockchainComImpl) GetSymbolList(ctx context.Context, 
 	}, nil
 }
 
-func (o *exchangeOrderBookBlockchainComImpl) GetSymbolPrice(ctx context.Context, param *model.GetSymbolPriceParams) (*model.GetSymbolPriceData, error) {
+func (o *exchangeOrderBookBlockchainComImpl) GetSymbolPrice(
+	ctx context.Context, param *model.GetSymbolPriceParams,
+) (*model.GetSymbolPriceData, error) {
 	response, _, err := o.client.UnauthenticatedApi.GetL3OrderBook(ctx, param.Symbol)
 	if err != nil {
 		logger.CtxErrorf(ctx, "blockchain_com_api_get_l3_order_book_error|err=%+v", err)
+
 		return nil, err
 	}
 

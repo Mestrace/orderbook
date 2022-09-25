@@ -1285,6 +1285,291 @@ func (p *GetExchangeMetadataReq) String() string {
 	return fmt.Sprintf("GetExchangeMetadataReq(%+v)", *p)
 }
 
+type ExchangeMetadata struct {
+	Description string `thrift:"Description,1,required" form:"Description,required" json:"Description,required" query:"Description,required" vd:"len($)>0 && len($)<1000"`
+	WebSite     string `thrift:"WebSite,2,required" form:"WebSite,required" json:"WebSite,required" query:"WebSite,required" vd:"len($)>0 && len($)<500"`
+	// all other unrecognized info
+	ExtInfo map[string]string `thrift:"ExtInfo,1000,required" form:"ExtInfo,required" json:"ExtInfo,required" query:"ExtInfo,required"`
+}
+
+func NewExchangeMetadata() *ExchangeMetadata {
+	return &ExchangeMetadata{}
+}
+
+func (p *ExchangeMetadata) GetDescription() (v string) {
+	return p.Description
+}
+
+func (p *ExchangeMetadata) GetWebSite() (v string) {
+	return p.WebSite
+}
+
+func (p *ExchangeMetadata) GetExtInfo() (v map[string]string) {
+	return p.ExtInfo
+}
+
+var fieldIDToName_ExchangeMetadata = map[int16]string{
+	1:    "Description",
+	2:    "WebSite",
+	1000: "ExtInfo",
+}
+
+func (p *ExchangeMetadata) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+	var issetDescription bool = false
+	var issetWebSite bool = false
+	var issetExtInfo bool = false
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+				issetDescription = true
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		case 2:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField2(iprot); err != nil {
+					goto ReadFieldError
+				}
+				issetWebSite = true
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		case 1000:
+			if fieldTypeId == thrift.MAP {
+				if err = p.ReadField1000(iprot); err != nil {
+					goto ReadFieldError
+				}
+				issetExtInfo = true
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	if !issetDescription {
+		fieldId = 1
+		goto RequiredFieldNotSetError
+	}
+
+	if !issetWebSite {
+		fieldId = 2
+		goto RequiredFieldNotSetError
+	}
+
+	if !issetExtInfo {
+		fieldId = 1000
+		goto RequiredFieldNotSetError
+	}
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_ExchangeMetadata[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+RequiredFieldNotSetError:
+	return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, fmt.Errorf("required field %s is not set", fieldIDToName_ExchangeMetadata[fieldId]))
+}
+
+func (p *ExchangeMetadata) ReadField1(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		p.Description = v
+	}
+	return nil
+}
+
+func (p *ExchangeMetadata) ReadField2(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		p.WebSite = v
+	}
+	return nil
+}
+
+func (p *ExchangeMetadata) ReadField1000(iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin()
+	if err != nil {
+		return err
+	}
+	p.ExtInfo = make(map[string]string, size)
+	for i := 0; i < size; i++ {
+		var _key string
+		if v, err := iprot.ReadString(); err != nil {
+			return err
+		} else {
+			_key = v
+		}
+
+		var _val string
+		if v, err := iprot.ReadString(); err != nil {
+			return err
+		} else {
+			_val = v
+		}
+
+		p.ExtInfo[_key] = _val
+	}
+	if err := iprot.ReadMapEnd(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ExchangeMetadata) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("ExchangeMetadata"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField1(oprot); err != nil {
+			fieldId = 1
+			goto WriteFieldError
+		}
+		if err = p.writeField2(oprot); err != nil {
+			fieldId = 2
+			goto WriteFieldError
+		}
+		if err = p.writeField1000(oprot); err != nil {
+			fieldId = 1000
+			goto WriteFieldError
+		}
+
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *ExchangeMetadata) writeField1(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("Description", thrift.STRING, 1); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Description); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *ExchangeMetadata) writeField2(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("WebSite", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.WebSite); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
+}
+
+func (p *ExchangeMetadata) writeField1000(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("ExtInfo", thrift.MAP, 1000); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRING, len(p.ExtInfo)); err != nil {
+		return err
+	}
+	for k, v := range p.ExtInfo {
+
+		if err := oprot.WriteString(k); err != nil {
+			return err
+		}
+
+		if err := oprot.WriteString(v); err != nil {
+			return err
+		}
+	}
+	if err := oprot.WriteMapEnd(); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1000 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1000 end error: ", p), err)
+}
+
+func (p *ExchangeMetadata) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("ExchangeMetadata(%+v)", *p)
+}
+
 type GetExchangeMetadataResp struct {
 	BizCode  int32             `thrift:"BizCode,1,required" form:"biz_code,required" json:"biz_code,required"`
 	ErrMsg   string            `thrift:"ErrMsg,2,required" form:"err_msg,required" json:"err_msg,required"`

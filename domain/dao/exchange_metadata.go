@@ -8,5 +8,5 @@ import (
 
 type ExchangeMetadata interface {
 	Update(ctx context.Context, param *model.UpdateMetadataParam) (*model.UpdateMetadataData, error)
-	Query(ctx context.Context, param *model.QueryMetadataData) (*model.UpdateMetadataParam, error)
+	QueryByName(ctx context.Context, param *model.QueryMetadataParam) (*model.QueryMetadataData, error)
 }

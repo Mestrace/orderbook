@@ -10,7 +10,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/test/assert"
 )
 
-func Test_setResponse(t *testing.T) {
+func TestUnit_setResponse(t *testing.T) {
 	resp := &order_book.GetExchangeMetadataResp{}
 
 	setErrorResponse(resp, fmt.Errorf("set error"))

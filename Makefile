@@ -10,3 +10,9 @@ setup:
 
 run_orderbook: orderbook
 	./bin/orderbook --conf config_secret.json
+
+test.unittest:
+	go test -v --run Unit ./...
+
+test.integration:
+	go test -v --run Integration ./...

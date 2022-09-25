@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/Mestrace/orderbook/conf"
@@ -14,10 +15,21 @@ type dbSet struct {
 }
 
 var (
-	dbSetMap map[string]*dbSet
+	initDBOnce sync.Once
+	dbSetMap   map[string]*dbSet
 )
 
+// InitDB initialize the database.
 func InitDB() error {
+	var err error
+	initDBOnce.Do(func() {
+		err = initDB()
+	})
+
+	return err
+}
+
+func initDB() error {
 	var (
 		config = conf.Get()
 	)

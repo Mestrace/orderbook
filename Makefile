@@ -9,7 +9,7 @@ setup:
 	hz update -idl idl/*.thrift
 
 run_orderbook: orderbook
-	./bin/orderbook --conf config_secret.json
+	./bin/orderbook --conf config_local.json
 
 test.unittest:
 	go test -v --run Unit ./...

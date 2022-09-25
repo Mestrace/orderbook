@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 // ExchangeMetadata db type and internal model.
 type ExchangeMetadata struct {
@@ -29,4 +31,10 @@ type QueryMetadataParam struct {
 
 type QueryMetadataData struct {
 	Metadata *ExchangeMetadata
+}
+
+// MetadataCSVRow csv row for metadata csv file upload.
+type MetadataCSVRow struct {
+	Key   string `csv:"Key"`
+	Value string `csv:"Value"`
 }

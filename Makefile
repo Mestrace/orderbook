@@ -16,3 +16,7 @@ test.unittest:
 
 test.integration:
 	go test -v --run Integration ./...
+
+lint:
+	gofumpt -w domain/*
+	golangci-lint run

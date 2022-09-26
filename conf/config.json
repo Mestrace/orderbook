@@ -2,5 +2,14 @@
     "blockchain_com": {
         "api_key": "api_key",
         "api_secret": "api_secret"
+    },
+    "mysql": {
+        "db_orderbook_main": {
+            "master_dsn": "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local",
+            "max_idle_conn": 10,
+            "max_open_conn": 100,
+            "conn_max_life_time": "30m",
+            "conn_max_idle_time": "5m"
+        }
     }
 }

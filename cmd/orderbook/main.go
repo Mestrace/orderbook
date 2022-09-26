@@ -6,12 +6,14 @@ import (
 	"flag"
 
 	"github.com/Mestrace/orderbook/conf"
+	"github.com/Mestrace/orderbook/domain/resources"
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
 func init() {
 	parseFlags()
 	conf.Init(confFilename)
+	resources.InitDB()
 }
 
 var (

@@ -39,10 +39,17 @@ struct GetExchangeMetadataReq {
     1: required string ExchangeName ( api.path = "exchange_name" ),
 }
 
+struct ExchangeMetadata {
+    1: required string Description ( api.vd = "len($)>0 && len($)<1000" ),
+    2: required string WebSite ( api.vd = "len($)>0 && len($)<500" ),
+    // all other unrecognized info
+    1000: required map<string, string> ExtInfo,
+}
+
 struct GetExchangeMetadataResp {
     1: required i32 BizCode ( api.body = "biz_code" ),
     2: required string ErrMsg ( api.body = "err_msg" ),
-    3: required map<string, string> Metadata ( api.body = "metadata" ),
+    3: required ExchangeMetadata Metadata ( api.body = "metadata" ),
 }
 
 struct UpdateExchangeMetadataReq {

@@ -1,4 +1,7 @@
-orderbook:
+tidy:
+	go mod tidy
+	
+orderbook: tidy
 	go build -o bin/orderbook github.com/Mestrace/orderbook/cmd/orderbook
 
 setup:
@@ -6,4 +9,14 @@ setup:
 	hz update -idl idl/*.thrift
 
 run_orderbook: orderbook
-	./bin/orderbook --conf config_secret.json
+	./bin/orderbook --conf config_local.json
+
+test.unittest:
+	go test -v --run Unit ./...
+
+test.integration:
+	go test -v --run Integration ./...
+
+lint-diff:
+	gofumpt -w domain/*
+	golangci-lint run --new-from-rev master

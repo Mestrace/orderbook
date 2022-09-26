@@ -17,6 +17,6 @@ test.unittest:
 test.integration:
 	go test -v --run Integration ./...
 
-lint:
+lint-diff:
 	gofumpt -w domain/*
-	golangci-lint run
+	golangci-lint run --new-from-rev master

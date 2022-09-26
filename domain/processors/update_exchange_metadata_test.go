@@ -153,9 +153,7 @@ func TestUnit_UpdateExchangeMetadata_Process(t *testing.T) {
 			Value string `csv:"key2"`
 		}
 
-		var (
-			r io.Reader
-		)
+		var r io.Reader
 		// produce data
 		{
 			imgByte := faker.ImageJpeg(100, 100)

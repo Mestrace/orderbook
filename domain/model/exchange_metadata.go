@@ -7,7 +7,7 @@ import (
 // ExchangeMetadata db type and internal model.
 type ExchangeMetadata struct {
 	ID        uint   `gorm:"primarykey"`
-	Exchange  string `gorm:"uniqueIndex:uniq_exchange` // exchange name
+	Exchange  string `gorm:"uniqueIndex:uniq_exchange"` // exchange name
 	Metadata  []byte // raw json string text column
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -22,8 +22,7 @@ type UpdateMetadataParam struct {
 	Metadata *ExchangeMetadata
 }
 
-type UpdateMetadataData struct {
-}
+type UpdateMetadataData struct{}
 
 type QueryMetadataParam struct {
 	ExchangeName string

@@ -22,6 +22,7 @@ var (
 // InitDB initialize the database.
 func InitDB() error {
 	var err error
+
 	initDBOnce.Do(func() {
 		err = initDB()
 	})
@@ -30,19 +31,21 @@ func InitDB() error {
 }
 
 func initDB() error {
-	var (
-		config = conf.Get()
-	)
+	config := conf.Get()
 
 	dbSetMap = make(map[string]*dbSet, len(config.Mysql))
 
 	for dbName, dbConf := range config.Mysql {
 		dbMaster, err := gorm.Open(mysql.New(mysql.Config{
-			DSN:                       dbConf.MasterDsn, // data source name
-			DisableDatetimePrecision:  true,             // disable datetime precision, which not supported before MySQL 5.6
-			DontSupportRenameIndex:    true,             // drop & create when rename index, rename index not supported before MySQL 5.7, MariaDB
-			DontSupportRenameColumn:   true,             // `change` when rename column, rename column not supported before MySQL 8, MariaDB
-			SkipInitializeWithVersion: false,            // auto configure based on currently MySQL versiona
+			DSN: dbConf.MasterDsn,
+			// disable datetime precision, which not supported before MySQL 5.6
+			DisableDatetimePrecision: true,
+			// drop & create when rename index, rename index not supported before MySQL 5.7, MariaDB
+			DontSupportRenameIndex: true,
+			// `change` when rename column, rename column not supported before MySQL 8, MariaDB
+			DontSupportRenameColumn: true,
+			// auto configure based on currently MySQL versiona
+			SkipInitializeWithVersion: false,
 		}), &gorm.Config{
 			SkipDefaultTransaction: true,
 			PrepareStmt:            true,
@@ -66,10 +69,11 @@ func initDB() error {
 			Master: dbMaster,
 		}
 	}
+
 	return nil
 }
 
-// keys
+// The keys of dbs.
 const (
 	keyDbOrderBookMain = "db_orderbook_main"
 )
@@ -79,6 +83,7 @@ func mustGetDbSet(key string) *dbSet {
 	if !ok {
 		panic(fmt.Sprintf("key not exist: %s", key))
 	}
+
 	return set
 }
 

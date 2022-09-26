@@ -18,16 +18,18 @@ type UpdateExchangeMetadata struct {
 }
 
 func (p *UpdateExchangeMetadata) Process(ctx context.Context,
-	req *bizModel.UpdateExchangeMetadataReq, r io.Reader) (*bizModel.GetExchangeMetadataResp, error) {
+	req *bizModel.UpdateExchangeMetadataReq, fileReader io.Reader,
+) (*bizModel.GetExchangeMetadataResp, error) {
 	var (
 		resp = &bizModel.GetExchangeMetadataResp{}
 		err  error
 		rows = []*model.MetadataCSVRow{}
 	)
 
-	err = gocsv.Unmarshal(r, &rows)
+	err = gocsv.Unmarshal(fileReader, &rows)
 	if err != nil {
 		logger.CtxErrorf(ctx, "unmarshal_csv_failed|err=%+v", err)
+
 		return resp, err
 	}
 
@@ -47,12 +49,14 @@ func (p *UpdateExchangeMetadata) Process(ctx context.Context,
 	err = dto.ValidateModelExchangeMetadata(metadata)
 	if err != nil {
 		logger.CtxErrorf(ctx, "validate_metadata_failed|err=%+v", err)
+
 		return resp, err
 	}
 
 	dbModel, err := dto.ConvertModelExchangeMetadataToDB(req.GetExchangeName(), metadata)
 	if err != nil {
 		logger.CtxErrorf(ctx, "dto_convert_to_db_failed|err=%+v", err)
+
 		return resp, err
 	}
 
@@ -61,6 +65,7 @@ func (p *UpdateExchangeMetadata) Process(ctx context.Context,
 	})
 	if err != nil {
 		logger.CtxErrorf(ctx, "update_metadata_db_failed|err=%+v", err)
+
 		return resp, err
 	}
 

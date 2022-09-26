@@ -13,11 +13,14 @@ func ValidateModelExchangeMetadata(model *bizModel.ExchangeMetadata) error {
 	if err := vd.Validate(model); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // ConvertModelExchangeMetadataToDB convert from api to db model.
-func ConvertModelExchangeMetadataToDB(exchangeName string, apiModel *bizModel.ExchangeMetadata) (*model.ExchangeMetadata, error) {
+func ConvertModelExchangeMetadataToDB(exchangeName string,
+	apiModel *bizModel.ExchangeMetadata,
+) (*model.ExchangeMetadata, error) {
 	metadataByte, err := json.Marshal(apiModel)
 	if err != nil {
 		return nil, err

@@ -29,7 +29,7 @@ type Config struct {
 		MaxOpenConn     int            `json:"max_open_conn"`
 		ConnMaxLifeTime ConfigDuration `json:"conn_max_life_time"`
 		ConnMaxIdleTime ConfigDuration `json:"conn_max_idle_time"`
-	} `json:"mysql`
+	} `json:"mysql"`
 }
 
 // Init initialize the config, will fetch the config under project_root/conf.
@@ -56,10 +56,11 @@ func Get() *Config {
 	if cfg == nil {
 		panic("conf not initialized")
 	}
+
 	return cfg
 }
 
-// ConfigDuration maps config duration string to actual time duration for json marshalling
+// ConfigDuration maps config duration string to actual time duration for json marshalling.
 type ConfigDuration time.Duration
 
 func (d *ConfigDuration) UnmarshalJSON(data []byte) error {
@@ -67,10 +68,13 @@ func (d *ConfigDuration) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+
 	duration, err := time.ParseDuration(unquoted)
 	if err != nil {
 		return err
 	}
+
 	*d = ConfigDuration(duration)
+
 	return nil
 }

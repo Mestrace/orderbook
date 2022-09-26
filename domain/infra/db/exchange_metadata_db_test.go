@@ -29,12 +29,10 @@ func TestIntegration_exchangeMetadataDB_QueryByName(t *testing.T) {
 	edb := NewExchangeMetadataDB(db)
 
 	{
-		var (
-			insertModel = &model.ExchangeMetadata{
-				Exchange: testExchange,
-				Metadata: []byte("{\"a\": \"b\"}"),
-			}
-		)
+		insertModel := &model.ExchangeMetadata{
+			Exchange: testExchange,
+			Metadata: []byte("{\"a\": \"b\"}"),
+		}
 		_, err := edb.Update(context.TODO(), &model.UpdateMetadataParam{
 			Metadata: insertModel,
 		})
@@ -51,12 +49,10 @@ func TestIntegration_exchangeMetadataDB_QueryByName(t *testing.T) {
 	}
 
 	{
-		var (
-			insertModel = &model.ExchangeMetadata{
-				Exchange: testExchange,
-				Metadata: []byte("{\"c\": \"d\"}"),
-			}
-		)
+		insertModel := &model.ExchangeMetadata{
+			Exchange: testExchange,
+			Metadata: []byte("{\"c\": \"d\"}"),
+		}
 		_, err := edb.Update(context.TODO(), &model.UpdateMetadataParam{
 			Metadata: insertModel,
 		})
@@ -71,7 +67,6 @@ func TestIntegration_exchangeMetadataDB_QueryByName(t *testing.T) {
 
 		assert.DeepEqual(t, insertModel.Metadata, data.Metadata.Metadata)
 	}
-
 }
 
 func TestIntegration_GenerateSql(t *testing.T) {
@@ -90,9 +85,7 @@ func TestIntegration_GenerateSql(t *testing.T) {
 	conf.Init("config_local.json")
 	resources.InitDB()
 
-	var (
-		db = resources.GetMasterOrderBookMainDb().Session(&gorm.Session{DryRun: true, Logger: newLogger})
-	)
+	db := resources.GetMasterOrderBookMainDb().Session(&gorm.Session{DryRun: true, Logger: newLogger})
 	err := db.Set("gorm:table_options", "ENGINE=InnoDB").Debug().Migrator().CreateTable(&model.ExchangeMetadata{})
 	if err != nil {
 		t.Error(err)

@@ -1573,7 +1573,7 @@ func (p *ExchangeMetadata) String() string {
 type GetExchangeMetadataResp struct {
 	BizCode  int32             `thrift:"BizCode,1,required" form:"biz_code,required" json:"biz_code,required"`
 	ErrMsg   string            `thrift:"ErrMsg,2,required" form:"err_msg,required" json:"err_msg,required"`
-	Metadata map[string]string `thrift:"Metadata,3,required" form:"metadata,required" json:"metadata,required"`
+	Metadata *ExchangeMetadata `thrift:"Metadata,3,required" form:"metadata,required" json:"metadata,required"`
 }
 
 func NewGetExchangeMetadataResp() *GetExchangeMetadataResp {
@@ -1588,7 +1588,12 @@ func (p *GetExchangeMetadataResp) GetErrMsg() (v string) {
 	return p.ErrMsg
 }
 
-func (p *GetExchangeMetadataResp) GetMetadata() (v map[string]string) {
+var GetExchangeMetadataResp_Metadata_DEFAULT *ExchangeMetadata
+
+func (p *GetExchangeMetadataResp) GetMetadata() (v *ExchangeMetadata) {
+	if !p.IsSetMetadata() {
+		return GetExchangeMetadataResp_Metadata_DEFAULT
+	}
 	return p.Metadata
 }
 
@@ -1596,6 +1601,10 @@ var fieldIDToName_GetExchangeMetadataResp = map[int16]string{
 	1: "BizCode",
 	2: "ErrMsg",
 	3: "Metadata",
+}
+
+func (p *GetExchangeMetadataResp) IsSetMetadata() bool {
+	return p.Metadata != nil
 }
 
 func (p *GetExchangeMetadataResp) Read(iprot thrift.TProtocol) (err error) {
@@ -1643,7 +1652,7 @@ func (p *GetExchangeMetadataResp) Read(iprot thrift.TProtocol) (err error) {
 				}
 			}
 		case 3:
-			if fieldTypeId == thrift.MAP {
+			if fieldTypeId == thrift.STRUCT {
 				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1718,29 +1727,8 @@ func (p *GetExchangeMetadataResp) ReadField2(iprot thrift.TProtocol) error {
 }
 
 func (p *GetExchangeMetadataResp) ReadField3(iprot thrift.TProtocol) error {
-	_, _, size, err := iprot.ReadMapBegin()
-	if err != nil {
-		return err
-	}
-	p.Metadata = make(map[string]string, size)
-	for i := 0; i < size; i++ {
-		var _key string
-		if v, err := iprot.ReadString(); err != nil {
-			return err
-		} else {
-			_key = v
-		}
-
-		var _val string
-		if v, err := iprot.ReadString(); err != nil {
-			return err
-		} else {
-			_val = v
-		}
-
-		p.Metadata[_key] = _val
-	}
-	if err := iprot.ReadMapEnd(); err != nil {
+	p.Metadata = NewExchangeMetadata()
+	if err := p.Metadata.Read(iprot); err != nil {
 		return err
 	}
 	return nil
@@ -1818,23 +1806,10 @@ WriteFieldEndError:
 }
 
 func (p *GetExchangeMetadataResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("Metadata", thrift.MAP, 3); err != nil {
+	if err = oprot.WriteFieldBegin("Metadata", thrift.STRUCT, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRING, len(p.Metadata)); err != nil {
-		return err
-	}
-	for k, v := range p.Metadata {
-
-		if err := oprot.WriteString(k); err != nil {
-			return err
-		}
-
-		if err := oprot.WriteString(v); err != nil {
-			return err
-		}
-	}
-	if err := oprot.WriteMapEnd(); err != nil {
+	if err := p.Metadata.Write(oprot); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {

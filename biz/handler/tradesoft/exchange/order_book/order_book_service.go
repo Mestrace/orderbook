@@ -68,9 +68,15 @@ func GetExchangeMetadata(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(order_book.GetExchangeMetadataResp)
+	metadataDB := resources.GetMasterOrderBookMainDb()
+	metadataDAO := db.NewExchangeMetadataDB(metadataDB)
 
-	c.JSON(200, resp)
+	proc := processors.GetExchangeMetadata{
+		MetadataDAO: metadataDAO,
+	}
+
+	resp, err := proc.Process(ctx, &req)
+	handleResponse(ctx, c, resp, err)
 }
 
 // UpdateExchangeMetadata .

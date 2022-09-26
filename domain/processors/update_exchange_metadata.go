@@ -19,9 +19,9 @@ type UpdateExchangeMetadata struct {
 
 func (p *UpdateExchangeMetadata) Process(ctx context.Context,
 	req *bizModel.UpdateExchangeMetadataReq, fileReader io.Reader,
-) (*bizModel.GetExchangeMetadataResp, error) {
+) (*bizModel.UpdateExchangeMetadataResp, error) {
 	var (
-		resp = &bizModel.GetExchangeMetadataResp{}
+		resp = &bizModel.UpdateExchangeMetadataResp{}
 		err  error
 		rows = []*model.MetadataCSVRow{}
 	)

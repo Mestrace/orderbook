@@ -49,7 +49,7 @@ struct ExchangeMetadata {
 struct GetExchangeMetadataResp {
     1: required i32 BizCode ( api.body = "biz_code" ),
     2: required string ErrMsg ( api.body = "err_msg" ),
-    3: required map<string, string> Metadata ( api.body = "metadata" ),
+    3: required ExchangeMetadata Metadata ( api.body = "metadata" ),
 }
 
 struct UpdateExchangeMetadataReq {

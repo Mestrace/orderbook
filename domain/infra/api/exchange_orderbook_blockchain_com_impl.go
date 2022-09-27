@@ -56,20 +56,28 @@ func (o *exchangeOrderBookBlockchainComImpl) GetSymbolPrice(
 
 	logger.CtxInfof(ctx, "blockchain_com_api_get_l3_order_book_success|resp=%+v", response)
 
-	asksAvgPrice, asksTotalQty := computeStateOfOrderBookEntry(response.Asks)
+	data := &model.GetSymbolPriceData{}
 
-	bidsAvgPrice, bidsTotalQty := computeStateOfOrderBookEntry(response.Bids)
+	if param.OrderType == model.OrderTypeAll ||
+		param.OrderType == model.OrderTypeBids {
+		asksAvgPrice, asksTotalQty := computeStateOfOrderBookEntry(response.Asks)
 
-	return &model.GetSymbolPriceData{
-		Ask: &model.SymbolStat{
+		data.Bid = &model.SymbolStat{
 			PriceAvg: asksAvgPrice,
 			QtyTotal: asksTotalQty,
-		},
-		Bid: &model.SymbolStat{
+		}
+	}
+
+	if param.OrderType == model.OrderTypeAll ||
+		param.OrderType == model.OrderTypeAsks {
+		bidsAvgPrice, bidsTotalQty := computeStateOfOrderBookEntry(response.Bids)
+		data.Ask = &model.SymbolStat{
 			PriceAvg: bidsAvgPrice,
 			QtyTotal: bidsTotalQty,
-		},
-	}, nil
+		}
+	}
+
+	return data, nil
 }
 
 func computeStateOfOrderBookEntry(entrys []blockchain_com.OrderBookEntry) (*big.Float, *big.Float) {

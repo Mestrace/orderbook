@@ -12,7 +12,8 @@ type GetSymbolListData struct {
 
 // GetSymbolPriceParams params for retrieving symbol price.
 type GetSymbolPriceParams struct {
-	Symbol string
+	Symbol    string
+	OrderType int32
 }
 
 // GetSymbolPriceData data fro retrieving symbol price.
@@ -25,3 +26,9 @@ type SymbolStat struct {
 	PriceAvg *big.Float
 	QtyTotal *big.Float
 }
+
+const (
+	OrderTypeAll int32 = iota
+	OrderTypeAsks
+	OrderTypeBids
+)

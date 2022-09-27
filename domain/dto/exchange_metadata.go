@@ -48,6 +48,7 @@ func ConvertSymbolStatToModel(stat *model.SymbolStat) *bizModel.SymbolItem {
 	if stat == nil {
 		return nil
 	}
+
 	return &bizModel.SymbolItem{
 		PxAvg:    stat.PriceAvg.Text('f', 2),
 		QtyTotal: stat.QtyTotal.Text('f', 2),

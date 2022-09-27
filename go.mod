@@ -15,6 +15,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/hertz-contrib/monitor-prometheus v0.0.0-20220908085834-f3fe5f5e72ed
 	github.com/smartystreets/goconvey v1.7.2
+	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
 	gorm.io/driver/mysql v1.3.6

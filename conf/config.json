@@ -1,7 +1,8 @@
 {
     "blockchain_com": {
         "api_key": "api_key",
-        "api_secret": "api_secret"
+        "api_secret": "api_secret",
+        "qps_limit": 20
     },
     "mysql": {
         "db_orderbook_main": {

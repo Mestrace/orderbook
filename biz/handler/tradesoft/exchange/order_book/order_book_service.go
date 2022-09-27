@@ -41,10 +41,12 @@ func GetExchangeOrderBook(ctx context.Context, c *app.RequestContext) {
 		Prefix: "Bearer", // Omit if not necessary.
 	})
 
+	orderbookDAO := api.NewExchangeOrderBookBlockchainCom(
+		*blockchain_com.NewAPIClient(blockchain_com.NewConfiguration()))
+	orderbookDAO = api.OrderbookWithRateLimit(resources.GetOrderbookRateLimit(), orderbookDAO)
+
 	proc := &processors.GetExchangeOrderBookProcessor{
-		OrderBookDAO: api.NewExchangeOrderBookBlockchainCom(
-			*blockchain_com.NewAPIClient(blockchain_com.NewConfiguration()),
-		),
+		OrderBookDAO: orderbookDAO,
 	}
 
 	resp, err := proc.Process(auth, &req)

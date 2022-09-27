@@ -8,6 +8,7 @@ import (
 	"github.com/Mestrace/orderbook/domain/model"
 	blockchain_com "github.com/Mestrace/orderbook/third_party/lib-exchange-client/go"
 	"github.com/bytedance/gopkg/util/logger"
+	"go.uber.org/ratelimit"
 )
 
 type exchangeOrderBookBlockchainComImpl struct {
@@ -92,4 +93,33 @@ func computeStateOfOrderBookEntry(entrys []blockchain_com.OrderBookEntry) (*big.
 	}
 
 	return priceAvg, totalQty
+}
+
+// OrderbookWithRateLimit wrap order book instance with rate limit.
+func OrderbookWithRateLimit(rate ratelimit.Limiter, orderbook dao.ExchangeOrderBook) dao.ExchangeOrderBook {
+	return &orderbookWithRateLimit{
+		rate:              rate,
+		ExchangeOrderBook: orderbook,
+	}
+}
+
+type orderbookWithRateLimit struct {
+	rate ratelimit.Limiter
+	dao.ExchangeOrderBook
+}
+
+func (o *orderbookWithRateLimit) GetSymbolList(
+	ctx context.Context, param *model.GetSymbolListParams,
+) (*model.GetSymbolListData, error) {
+	o.rate.Take()
+
+	return o.ExchangeOrderBook.GetSymbolList(ctx, param)
+}
+
+func (o *orderbookWithRateLimit) GetSymbolPrice(
+	ctx context.Context, param *model.GetSymbolPriceParams,
+) (*model.GetSymbolPriceData, error) {
+	o.rate.Take()
+
+	return o.ExchangeOrderBook.GetSymbolPrice(ctx, param)
 }

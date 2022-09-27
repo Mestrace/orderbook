@@ -14,7 +14,7 @@ import (
 func init() {
 	parseFlags()
 	conf.Init(confFilename)
-	resources.InitDB()
+	resources.Init()
 }
 
 var (

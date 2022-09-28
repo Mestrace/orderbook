@@ -3,11 +3,14 @@ package processors
 import (
 	"context"
 	"sort"
+	"sync"
 
-	biz_model "github.com/Mestrace/orderbook/biz/model/tradesoft/exchange/order_book"
+	bizModel "github.com/Mestrace/orderbook/biz/model/tradesoft/exchange/order_book"
 	"github.com/Mestrace/orderbook/domain/dao"
+	"github.com/Mestrace/orderbook/domain/dto"
 	"github.com/Mestrace/orderbook/domain/model"
 	"github.com/bytedance/gopkg/util/logger"
+	"golang.org/x/sync/errgroup"
 )
 
 type GetExchangeOrderBookProcessor struct {
@@ -15,10 +18,10 @@ type GetExchangeOrderBookProcessor struct {
 }
 
 func (p *GetExchangeOrderBookProcessor) Process(ctx context.Context,
-	req *biz_model.GetExchangeOrderBookReq,
-) (*biz_model.GetExchangeOrderBookResp, error) {
+	req *bizModel.GetExchangeOrderBookReq,
+) (*bizModel.GetExchangeOrderBookResp, error) {
 	var (
-		resp    = &biz_model.GetExchangeOrderBookResp{}
+		resp    = &bizModel.GetExchangeOrderBookResp{}
 		symbols []string
 	)
 
@@ -34,46 +37,56 @@ func (p *GetExchangeOrderBookProcessor) Process(ctx context.Context,
 		symbols = symbolListData.Symbols
 	}
 
-	result := make([]*biz_model.Symbol, 0, len(symbols))
+	resultMu := new(sync.Mutex)
+	result := make([]*bizModel.Symbol, 0, len(symbols))
+
+	fetchGroup, gctx := errgroup.WithContext(ctx)
+	fetchGroup.SetLimit(10)
 
 	for _, symbol := range symbols {
-		symbolPriceData, err := p.OrderBookDAO.GetSymbolPrice(ctx, &model.GetSymbolPriceParams{
-			Symbol: symbol,
-		})
-		if err != nil {
-			logger.CtxWarnf(ctx, "get_symbol_price_failed|err=%+v|symbol=%s", err, symbol)
+		actualSymbol := symbol // capture local variable
 
-			continue
-		}
-
-		item := &biz_model.Symbol{
-			Symbol: symbol,
-		}
-
-		if req.GetOrderType() == int32(biz_model.OrderType_All) || req.GetOrderType() == int32(biz_model.OrderType_Bids) {
-			item.Bid = &biz_model.SymbolItem{
-				PxAvg:    symbolPriceData.Bid.PriceAvg.Text('f', 2),
-				QtyTotal: symbolPriceData.Bid.QtyTotal.Text('f', 2),
-			}
-		}
-
-		if req.GetOrderType() == int32(biz_model.OrderType_All) || req.GetOrderType() == int32(biz_model.OrderType_Asks) {
-			item.Ask = &biz_model.SymbolItem{
-				PxAvg:    symbolPriceData.Ask.PriceAvg.Text('f', 2),
-				QtyTotal: symbolPriceData.Ask.QtyTotal.Text('f', 2),
-			}
-		}
-
-		result = append(result, item)
-
-		if req.GetOrderBy() == int32(biz_model.OrderBy_Symbol) {
-			sort.Slice(result, func(i, j int) bool {
-				return result[i].GetSymbol() < result[j].GetSymbol()
+		fetchGroup.Go(func() error {
+			item, _ := p.fetchSymbolPrice(gctx, &model.GetSymbolPriceParams{
+				Symbol:    actualSymbol,
+				OrderType: req.GetOrderType(),
 			})
-		}
+			if item == nil {
+				return nil
+			}
+
+			resultMu.Lock()
+			result = append(result, item)
+			resultMu.Unlock()
+
+			return nil
+		})
+	}
+
+	if req.GetOrderBy() == int32(bizModel.OrderBy_Symbol) {
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].GetSymbol() < result[j].GetSymbol()
+		})
 	}
 
 	resp.Symbols = result
 
 	return resp, nil
+}
+
+func (p *GetExchangeOrderBookProcessor) fetchSymbolPrice(ctx context.Context, param *model.GetSymbolPriceParams) (
+	*bizModel.Symbol, error,
+) {
+	symbolPriceData, err := p.OrderBookDAO.GetSymbolPrice(ctx, param)
+	if err != nil {
+		logger.CtxWarnf(ctx, "get_symbol_price_failed|err=%+v|symbol=%s", err, param.Symbol)
+
+		return nil, err
+	}
+
+	return &bizModel.Symbol{
+		Symbol: param.Symbol,
+		Ask:    dto.ConvertSymbolStatToModel(symbolPriceData.Ask),
+		Bid:    dto.ConvertSymbolStatToModel(symbolPriceData.Bid),
+	}, nil
 }

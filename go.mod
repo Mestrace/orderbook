@@ -13,9 +13,12 @@ require (
 	github.com/cloudwego/hertz v0.3.2
 	github.com/gocarina/gocsv v0.0.0-20220914091333-ceebdd90b590
 	github.com/golang/mock v1.6.0
+	github.com/hertz-contrib/monitor-prometheus v0.0.0-20220908085834-f3fe5f5e72ed
 	github.com/smartystreets/goconvey v1.7.2
+	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
+	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
 	gorm.io/driver/mysql v1.3.6
 	gorm.io/gorm v1.23.10
 )

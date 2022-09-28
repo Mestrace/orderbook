@@ -8,6 +8,7 @@ import (
 	"github.com/Mestrace/orderbook/domain/model"
 	blockchain_com "github.com/Mestrace/orderbook/third_party/lib-exchange-client/go"
 	"github.com/bytedance/gopkg/util/logger"
+	"go.uber.org/ratelimit"
 )
 
 type exchangeOrderBookBlockchainComImpl struct {
@@ -55,20 +56,28 @@ func (o *exchangeOrderBookBlockchainComImpl) GetSymbolPrice(
 
 	logger.CtxInfof(ctx, "blockchain_com_api_get_l3_order_book_success|resp=%+v", response)
 
-	asksAvgPrice, asksTotalQty := computeStateOfOrderBookEntry(response.Asks)
+	data := &model.GetSymbolPriceData{}
 
-	bidsAvgPrice, bidsTotalQty := computeStateOfOrderBookEntry(response.Bids)
+	if param.OrderType == model.OrderTypeAll ||
+		param.OrderType == model.OrderTypeBids {
+		asksAvgPrice, asksTotalQty := computeStateOfOrderBookEntry(response.Asks)
 
-	return &model.GetSymbolPriceData{
-		Ask: &model.SymbolStat{
+		data.Bid = &model.SymbolStat{
 			PriceAvg: asksAvgPrice,
 			QtyTotal: asksTotalQty,
-		},
-		Bid: &model.SymbolStat{
+		}
+	}
+
+	if param.OrderType == model.OrderTypeAll ||
+		param.OrderType == model.OrderTypeAsks {
+		bidsAvgPrice, bidsTotalQty := computeStateOfOrderBookEntry(response.Bids)
+		data.Ask = &model.SymbolStat{
 			PriceAvg: bidsAvgPrice,
 			QtyTotal: bidsTotalQty,
-		},
-	}, nil
+		}
+	}
+
+	return data, nil
 }
 
 func computeStateOfOrderBookEntry(entrys []blockchain_com.OrderBookEntry) (*big.Float, *big.Float) {
@@ -92,4 +101,33 @@ func computeStateOfOrderBookEntry(entrys []blockchain_com.OrderBookEntry) (*big.
 	}
 
 	return priceAvg, totalQty
+}
+
+// OrderbookWithRateLimit wrap order book instance with rate limit.
+func OrderbookWithRateLimit(rate ratelimit.Limiter, orderbook dao.ExchangeOrderBook) dao.ExchangeOrderBook {
+	return &orderbookWithRateLimit{
+		rate:              rate,
+		ExchangeOrderBook: orderbook,
+	}
+}
+
+type orderbookWithRateLimit struct {
+	rate ratelimit.Limiter
+	dao.ExchangeOrderBook
+}
+
+func (o *orderbookWithRateLimit) GetSymbolList(
+	ctx context.Context, param *model.GetSymbolListParams,
+) (*model.GetSymbolListData, error) {
+	o.rate.Take()
+
+	return o.ExchangeOrderBook.GetSymbolList(ctx, param)
+}
+
+func (o *orderbookWithRateLimit) GetSymbolPrice(
+	ctx context.Context, param *model.GetSymbolPriceParams,
+) (*model.GetSymbolPriceData, error) {
+	o.rate.Take()
+
+	return o.ExchangeOrderBook.GetSymbolPrice(ctx, param)
 }

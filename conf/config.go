@@ -22,6 +22,7 @@ type Config struct {
 	BlockchainCom struct {
 		APIKey    string `json:"api_key"`
 		APISecret string `json:"api_secret"`
+		QPSLimit  int    `json:"qps_limit"`
 	} `json:"blockchain_com"`
 	Mysql map[string]*struct {
 		MasterDsn       string         `json:"master_dsn"`

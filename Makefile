@@ -20,3 +20,6 @@ test.integration:
 lint-diff:
 	gofumpt -w domain/*
 	golangci-lint run --new-from-rev master
+
+count-cloc:
+	cloc --no-autogen --not-match-d="mock_dao|biz/model|biz/router|third_party" --ignored=ignored --fullpath .

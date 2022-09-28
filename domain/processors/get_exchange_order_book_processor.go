@@ -28,7 +28,9 @@ func (p *GetExchangeOrderBookProcessor) Process(ctx context.Context,
 	if req.GetSymbol() != "" {
 		symbols = []string{req.GetSymbol()}
 	} else {
-		symbolListData, err := p.OrderBookDAO.GetSymbolList(ctx, nil)
+		symbolListData, err := p.OrderBookDAO.GetSymbolList(ctx, &model.GetSymbolListParams{
+			ExchangeName: req.GetExchangeName(),
+		})
 		if err != nil {
 			logger.CtxErrorf(ctx, "get_symbol_list_failed|err=%+v", err)
 
@@ -48,8 +50,9 @@ func (p *GetExchangeOrderBookProcessor) Process(ctx context.Context,
 
 		fetchGroup.Go(func() error {
 			item, _ := p.fetchSymbolPrice(gctx, &model.GetSymbolPriceParams{
-				Symbol:    actualSymbol,
-				OrderType: req.GetOrderType(),
+				ExchangeName: req.GetExchangeName(),
+				Symbol:       actualSymbol,
+				OrderType:    req.GetOrderType(),
 			})
 			if item == nil {
 				return nil

@@ -11,6 +11,7 @@ require (
 	github.com/bytedance/go-tagexpr/v2 v2.9.5
 	github.com/bytedance/gopkg v0.0.0-20220413063733-65bf48ffb3a7
 	github.com/cloudwego/hertz v0.3.2
+	github.com/go-redis/redis/v9 v9.0.0-beta.2
 	github.com/gocarina/gocsv v0.0.0-20220914091333-ceebdd90b590
 	github.com/golang/mock v1.6.0
 	github.com/hertz-contrib/monitor-prometheus v0.0.0-20220908085834-f3fe5f5e72ed

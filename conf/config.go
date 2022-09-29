@@ -20,9 +20,11 @@ var (
 
 type Config struct {
 	BlockchainCom struct {
-		APIKey    string `json:"api_key"`
-		APISecret string `json:"api_secret"`
-		QPSLimit  int    `json:"qps_limit"`
+		APIKey                  string         `json:"api_key"`
+		APISecret               string         `json:"api_secret"`
+		QPSLimit                int            `json:"qps_limit"`
+		SymbolListCacheDuration ConfigDuration `json:"symbol_list_cache_duration"`
+		SymbolCacheDuration     ConfigDuration `json:"symbol_cache_duration"`
 	} `json:"blockchain_com"`
 	Mysql map[string]*struct {
 		MasterDsn       string         `json:"master_dsn"`
@@ -31,6 +33,15 @@ type Config struct {
 		ConnMaxLifeTime ConfigDuration `json:"conn_max_life_time"`
 		ConnMaxIdleTime ConfigDuration `json:"conn_max_idle_time"`
 	} `json:"mysql"`
+	Redis struct {
+		Addr         string         `json:"addr"`
+		Password     string         `json:"password"`
+		Db           int            `json:"db"`
+		MaxRetries   int            `json:"max_retries"`
+		DialTimeout  ConfigDuration `json:"dial_timeout"`
+		ReadTimeout  ConfigDuration `json:"read_timeout"`
+		WriteTimeout ConfigDuration `json:"write_timeout"`
+	} `json:"redis"`
 }
 
 // Init initialize the config, will fetch the config under project_root/conf.

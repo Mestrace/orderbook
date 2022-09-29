@@ -61,6 +61,7 @@ func Init(filename string) {
 		if err != nil {
 			panic(fmt.Sprintf("Init config failed|err=%+v", err))
 		}
+		fmt.Println(cfg)
 	})
 }
 

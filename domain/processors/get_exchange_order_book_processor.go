@@ -2,6 +2,7 @@ package processors
 
 import (
 	"context"
+	"math/rand"
 	"sort"
 	"sync"
 
@@ -39,11 +40,15 @@ func (p *GetExchangeOrderBookProcessor) Process(ctx context.Context,
 		symbols = symbolListData.Symbols
 	}
 
+	rand.Shuffle(len(symbols)/4, func(i, j int) {
+		symbols[i], symbols[j] = symbols[j], symbols[i]
+	})
+
 	resultMu := new(sync.Mutex)
 	result := make([]*bizModel.Symbol, 0, len(symbols))
 
 	fetchGroup, gctx := errgroup.WithContext(ctx)
-	fetchGroup.SetLimit(10)
+	fetchGroup.SetLimit(20)
 
 	for _, symbol := range symbols {
 		actualSymbol := symbol // capture local variable

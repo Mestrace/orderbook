@@ -5,10 +5,12 @@ package order_book
 import (
 	"context"
 	"fmt"
+	"time"
 
 	order_book "github.com/Mestrace/orderbook/biz/model/tradesoft/exchange/order_book"
 	"github.com/Mestrace/orderbook/conf"
 	"github.com/Mestrace/orderbook/domain/infra/api"
+	"github.com/Mestrace/orderbook/domain/infra/cache"
 	"github.com/Mestrace/orderbook/domain/infra/db"
 	"github.com/Mestrace/orderbook/domain/processors"
 	"github.com/Mestrace/orderbook/domain/resources"
@@ -44,6 +46,9 @@ func GetExchangeOrderBook(ctx context.Context, c *app.RequestContext) {
 	orderbookDAO := api.NewExchangeOrderBookBlockchainCom(
 		*blockchain_com.NewAPIClient(blockchain_com.NewConfiguration()))
 	orderbookDAO = api.OrderbookWithRateLimit(resources.GetOrderbookRateLimit(), orderbookDAO)
+	orderbookDAO = cache.OrderBookWithRedis(orderbookDAO, resources.GetRedisClient(),
+		time.Duration(cfg.BlockchainCom.SymbolListCacheDuration),
+		time.Duration(cfg.BlockchainCom.SymbolCacheDuration))
 
 	proc := &processors.GetExchangeOrderBookProcessor{
 		OrderBookDAO: orderbookDAO,

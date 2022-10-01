@@ -6,4 +6,5 @@ func Init() {
 	}
 
 	InitRateLimit()
+	InitRedis()
 }

@@ -17,12 +17,12 @@ func handleResponse(_ context.Context, reqCtxt *app.RequestContext, resp interfa
 
 	status := http.StatusInternalServerError
 
-	setErrorResponse(resp, err)
+	SetErrorResponse(resp, err)
 
 	reqCtxt.JSON(status, resp)
 }
 
-func setErrorResponse(resp interface{}, err error) {
+func SetErrorResponse(resp interface{}, err error) {
 	code := int32(-1)
 
 	if bizCode := reflect.Indirect(reflect.ValueOf(resp)).

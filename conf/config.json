@@ -2,7 +2,9 @@
     "blockchain_com": {
         "api_key": "api_key",
         "api_secret": "api_secret",
-        "qps_limit": 20
+        "qps_limit": 20,
+        "symbol_list_cache_duration": "10m",
+        "symbol_cache_duration": "3s"
     },
     "mysql": {
         "db_orderbook_main": {
@@ -12,5 +14,14 @@
             "conn_max_life_time": "30m",
             "conn_max_idle_time": "5m"
         }
+    },
+    "redis": {
+        "addr": "localhost:6379",
+        "password": "",
+        "db": 0,
+        "max_retries": 2,
+        "dial_timeout": "1s",
+        "read_timeout": "500ms",
+        "write_timeout": "1s"
     }
 }

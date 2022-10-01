@@ -3,7 +3,9 @@ package model
 import "math/big"
 
 // GetSymbolListParams params for retrieving symbol list.
-type GetSymbolListParams struct{}
+type GetSymbolListParams struct {
+	ExchangeName string
+}
 
 // GetSymbolListData data for retrieving symbol data.
 type GetSymbolListData struct {
@@ -12,8 +14,9 @@ type GetSymbolListData struct {
 
 // GetSymbolPriceParams params for retrieving symbol price.
 type GetSymbolPriceParams struct {
-	Symbol    string
-	OrderType int32
+	ExchangeName string
+	Symbol       string
+	OrderType    int32
 }
 
 // GetSymbolPriceData data fro retrieving symbol price.

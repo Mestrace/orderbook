@@ -1,10 +1,9 @@
 # OrderBook
 TradeSoft is a well-known company in the crypto market that provides powerful statistics, dashboards and metrics to their customers. As a backend software developer in TradeSoft, you were requested to develop a REST API which integrates with most famous crypto exchanges and exposes aggregated data to be visualized in the application. 
 
-## Project Managementf
+## Project Management
 
 ### DOING
-- [Perf 2] Use Redis to cache symbol results https://github.com/Mestrace/orderbook/issues/7
 
 ### TODO
 
@@ -13,6 +12,7 @@ TradeSoft is a well-known company in the crypto market that provides powerful st
 
 ### DONE
 
+- [Perf 2] Use Redis to cache symbol results https://github.com/Mestrace/orderbook/issues/7
 - [Perf 1] Concurrently call to blockchain.com api https://github.com/Mestrace/orderbook/pull/4
 - [Prototype 1] https://github.com/Mestrace/orderbook/pull/2
 
@@ -38,6 +38,29 @@ TradeSoft is a well-known company in the crypto market that provides powerful st
 ### Dependency Injection
 
 `processors` will take the abstracted daos and resources as input, and implement the logic on top of that. Eventually inside the handler, implementation will be picked and intialized and injected into the processor.
+
+## Quick Start
+
+### Setup
+
+- Conf
+  - Make a copy of `conf/config.json` as `conf/config_local.json` for your own configuration.
+- DB
+  - Install and start your db instance. For MacOS, `brew install mysql` and `brew services start mysql`
+  - Setup your db and modify `conf/config_local.json` to setup the client and dsn
+    - `"master_dsn": "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"`
+  - Run SQL under `sql/orderbook.sql` inside your mysql shell to migrate the table structure. 
+- Redis
+  - Install and start your redis instance. For MacOS, `brew install redis` and `brew services start redis`
+  - Setup your redis instance and modify `conf/config_local.json` to setup the redis client.
+    - `"addr": "localhost:6379"`
+    - `"password": ""`
+    - `"db": 0`
+
+### Build and Run
+
+Run `make run_orderbook` the service should start.
+
 
 ## API Design
 
@@ -140,3 +163,23 @@ AUTO_INCREMENT = 1000,
 ENGINE=InnoDB, 
 DEFAULT CHARSET = utf8mb4;
 ```
+
+## Further Thoughts
+
+Currently for the demonstration purpose, this prototype is designed to be simple and yet is in complete and cannot ensuer service reliablity. In this section we imagine the overall architecture of the service.
+
+![orderbook](https://user-images.githubusercontent.com/26028388/193398172-c8cab40b-093b-4a43-8ebf-e91a8d6953ba.png)
+
+- Access Layer provides some generic and common ability such as service routing, authentication and rate limiting.
+- Service Layer is a user-facing layer that provides user models and some form of logic encapsulation that suits the need of clients.
+- Logic Layer contains the core logic for this system
+  - Account provides user management and permission
+  - Metadata provides metadata and api key management. 
+  - Fetcher provides encapsulation of data fetching logic and caching. Internally it would route and use different fetcher implementation to obtain the data from the client. The fetcher implementation could either be something that is implemented inside the fetcher service, or an service that provides generic api to obtain.
+- Data Layer contains the data infrastrucutres to be used in this system.
+- General abilities includes some of the vital features of modern distributed system.
+  - Service Discovery ensures the connectivity between different services, and can provide enhanced abilities such as feature branch deployments.
+  - Regional / AZ Deployment provides deployement management across multiple availability zones, in order to provide better service for clients across different geographic regions.
+  - Disastor Recovery ensure the service reliability when something happens.
+  - Observability provides monitoring and alerting management for all services.
+  
